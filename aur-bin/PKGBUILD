@@ -1,0 +1,26 @@
+# Maintainer: WaTh
+pkgname=euro-office-desktopeditors-bin
+pkgver=UPDATE_ME
+pkgrel=1
+pkgdesc="Euro-Office Desktop Editors (pre-compiled binary)"
+arch=('x86_64')
+url="https://github.com/Euro-Office"
+license=('AGPL3')
+
+
+_repo_url="https://github.com/WarreTh/euro-office-builds"
+
+depends=('gtk3' 'nss' 'alsa-lib' 'libxss' 'ttf-font' 'curl' 'glib2') 
+options=('!strip' '!emptydirs')
+provides=('euro-office-desktopeditors')
+conflicts=('euro-office-desktopeditors' 'euro-office-desktopeditors-git')
+source=("euro-office-root-${pkgver}.pkg.tar.zst::${_repo_url}/releases/download/v${pkgver}-${pkgrel}/euro-office-desktopeditors-git-${pkgver}-${pkgrel}-x86_64.pkg.tar.zst")
+sha256sums=('SKIP')
+
+package() {
+  # Extract the CI pre-built Pacman payload directly over our installation directory
+  tar -I zstd -xvf "${srcdir}/euro-office-root-${pkgver}.pkg.tar.zst" -C "${pkgdir}"
+  
+  # Remove pacman metadata files inherited from the CI build
+  rm -f "${pkgdir}/.PKGINFO" "${pkgdir}/.MTREE" "${pkgdir}/.BUILDINFO" || true
+}
