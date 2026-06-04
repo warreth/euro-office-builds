@@ -53,7 +53,15 @@ jobs:
         run: |
           useradd -m builder
           echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          usermod -aG docker builder || true
+          
+          # Fix Docker socket permissions so the non-root builder user can use Docker.
+          # The host socket GID won't match anything inside this container, so we
+          # create a docker group with the correct GID and add builder to it.
+          DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+          groupadd -g "$DOCKER_GID" docker 2>/dev/null || groupmod -g "$DOCKER_GID" docker 2>/dev/null || true
+          usermod -aG docker builder
+          # Also make the socket world-accessible as a fallback
+          chmod 666 /var/run/docker.sock
           
           # Install yay to handle AUR dependencies
           sudo -u builder bash -c "cd /home/builder && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --noconfirm"
