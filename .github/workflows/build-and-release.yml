@@ -81,9 +81,19 @@ jobs:
           sed -i "s/conflicts=.*/conflicts=('euro-office-desktopeditors-git')/g" PKGBUILD
           sed -i "s|source=(\"git+https://github.com/Euro-Office/DesktopEditors.git\")|source=(\"git+https://github.com/Euro-Office/DesktopEditors.git#tag=$TAG\")|g" PKGBUILD
           
-          # Workaround: older tags don't contain the 'build' directory, but PKGBUILD requires it.
-          # We patch prepare() to fetch the build directory from the main branch.
-          sed -i '/cd "$srcdir\/DesktopEditors"/a \ \ git fetch origin main \&\& git checkout FETCH_HEAD -- build' PKGBUILD
+          # Workaround: Fetch the new Docker build infrastructure from main branch 
+          # because it doesn't exist in older upstream tags like v9.4.0
+          cat << 'EOF' > patch.txt
+          git fetch origin main
+          git checkout FETCH_HEAD -- build
+          for sub in core desktop-apps sdkjs; do
+            (cd $sub && git remote add euro https://github.com/Euro-Office/$sub.git || true)
+            (cd $sub && git fetch euro main && git checkout euro/main -- .docker)
+          done
+          (cd web-apps && git remote add euro https://github.com/Euro-Office/web-apps.git || true)
+          (cd web-apps && git fetch euro main && git checkout euro/main -- .docker)
+          EOF
+          sed -i '/cd "$srcdir\/DesktopEditors"/r patch.txt' PKGBUILD
 
       - name: Build package natively via yay
         run: |
