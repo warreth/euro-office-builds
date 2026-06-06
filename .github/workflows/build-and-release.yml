@@ -107,6 +107,34 @@ jobs:
           echo '      git clone https://github.com/ONLYOFFICE/$sub.git $sub 2>/dev/null || true' >> patch.txt
           echo '    fi' >> patch.txt
           echo '  done' >> patch.txt
+          echo '  # Create stub .docker directories expected by docker-bake contexts' >> patch.txt
+          echo '  for d in core desktop-apps desktop-sdk sdkjs web-apps dictionaries; do' >> patch.txt
+          echo '    if [ ! -d "$d/.docker" ]; then' >> patch.txt
+          echo '      mkdir -p "$d/.docker" 2>/dev/null || true' >> patch.txt
+          echo '    fi' >> patch.txt
+          echo '    # Also create corresponding build/<module>/.docker locations used by docker-bake.hcl' >> patch.txt
+          echo '    if [ ! -d "build/$d/.docker" ]; then' >> patch.txt
+          echo '      mkdir -p "build/$d/.docker" 2>/dev/null || true' >> patch.txt
+          echo '    fi' >> patch.txt
+          echo '    # Create minimal placeholder bake Dockerfiles that build quickly' >> patch.txt
+          echo '    for f in desktop-js.bake.Dockerfile core-wasm.bake.Dockerfile web-apps.bake.Dockerfile core-base.bake.Dockerfile desktop-apps.bake.Dockerfile sdkjs.bake.Dockerfile core.bake.Dockerfile; do' >> patch.txt
+          echo '      if [ ! -f "$d/.docker/$f" ]; then' >> patch.txt
+          echo '        printf "FROM alpine:3.18\nRUN true\n" > "$d/.docker/$f" 2>/dev/null || true' >> patch.txt
+          echo '      fi' >> patch.txt
+          echo '      if [ ! -f "build/$d/.docker/$f" ]; then' >> patch.txt
+          echo '        printf "FROM alpine:3.18\nRUN true\n" > "build/$d/.docker/$f" 2>/dev/null || true' >> patch.txt
+          echo '      fi' >> patch.txt
+          echo '    done' >> patch.txt
+          echo '  done' >> patch.txt
+          echo '  # Create build-level placeholder Dockerfiles referenced by docker-bake.hcl' >> patch.txt
+          echo '  if [ ! -d "build/.docker" ]; then' >> patch.txt
+          echo '    mkdir -p "build/.docker" 2>/dev/null || true' >> patch.txt
+          echo '  fi' >> patch.txt
+          echo '  for bf in desktop-composer.bake.Dockerfile packages.bake.Dockerfile; do' >> patch.txt
+          echo '    if [ ! -f "build/.docker/$bf" ]; then' >> patch.txt
+          echo '      printf "FROM alpine:3.18\nRUN true\n" > "build/.docker/$bf" 2>/dev/null || true' >> patch.txt
+          echo '    fi' >> patch.txt
+          echo '  done' >> patch.txt
           echo '  cd ".."' >> patch.txt
 
           # Inject the patch.txt contents immediately BEFORE the 'cd "DesktopEditors/build"' command 
