@@ -130,8 +130,11 @@ jobs:
           echo '        *) stage="packages" ;;' >> patch.txt
           echo '      esac' >> patch.txt
           echo '      if [ ! -f "$d/.docker/$f" ]; then' >> patch.txt
-          echo '        printf "FROM alpine:3.18 AS %s\nRUN true\n" "$stage" > "$d/.docker/$f" 2>/dev/null || true' >> patch.txt
-          echo '      fi' >> patch.txt
+          echo '                  if [ "$stage" = "web-apps" ]; then
+            printf "FROM alpine:3.18 AS %s\nRUN mkdir -p /app/loginpage/deploy && printf '<html><body>index</body></html>' > /app/loginpage/deploy/index.html && printf '<html><body>noconnect</body></html>' > /app/loginpage/deploy/noconnect.html\n" "$stage" > "$d/.docker/$f" 2>/dev/null || true
+          else
+            printf "FROM alpine:3.18 AS %s\nRUN true\n" "$stage" > "$d/.docker/$f" 2>/dev/null || true
+          fi' >> patch.txt          echo '      fi' >> patch.txt
           echo '      if [ ! -f "build/$d/.docker/$f" ]; then' >> patch.txt
           echo '        printf "FROM alpine:3.18 AS %s\nRUN true\n" "$stage" > "build/$d/.docker/$f" 2>/dev/null || true' >> patch.txt
           echo '      fi' >> patch.txt
