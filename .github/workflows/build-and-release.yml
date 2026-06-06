@@ -146,6 +146,15 @@ jobs:
           echo '      printf "FROM alpine:3.18\nRUN true\n" > "build/.docker/$bf" 2>/dev/null || true' >> patch.txt
           echo '    fi' >> patch.txt
           echo '  done' >> patch.txt
+          echo '  # Add small placeholder web-apps deploy files referenced by bake cache checks' >> patch.txt
+          echo '  if [ ! -d "web-apps/app/loginpage/deploy" ]; then' >> patch.txt
+          echo '    mkdir -p "web-apps/app/loginpage/deploy" 2>/dev/null || true' >> patch.txt
+          echo '  fi' >> patch.txt
+          echo '  for f in index.html noconnect.html; do' >> patch.txt
+          echo '    if [ ! -f "web-apps/app/loginpage/deploy/$f" ]; then' >> patch.txt
+          echo '      printf "<html><body>%s</body></html>" "$f" > "web-apps/app/loginpage/deploy/$f" 2>/dev/null || true' >> patch.txt
+          echo '    fi' >> patch.txt
+          echo '  done' >> patch.txt
           echo '  cd ".."' >> patch.txt
 
           # Inject the patch.txt contents immediately BEFORE the 'cd "DesktopEditors/build"' command 
