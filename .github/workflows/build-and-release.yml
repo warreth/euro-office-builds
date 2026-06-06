@@ -140,8 +140,10 @@ jobs:
           # Inject the patch.txt contents immediately BEFORE the 'cd "DesktopEditors/build"' command 
           # inside the build() function.
           awk '
-          /cd "DesktopEditors\/build"/ {
+          /cd "\$srcdir\/DesktopEditors"/ {
+              print
               while ((getline line < "patch.txt") > 0) print line
+              next
           }
           {print}
           ' PKGBUILD > PKGBUILD.new && mv PKGBUILD.new PKGBUILD
