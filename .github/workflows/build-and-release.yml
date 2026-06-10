@@ -82,24 +82,19 @@ jobs:
           sed -i 's/docker buildx bake packages/docker buildx bake --allow=fs=\/tmp --allow=fs.read=.. packages/g' PKGBUILD
 
           # Create the patch logic using echo commands to avoid YAML heredoc indentation errors.
-          echo '  cd "DesktopEditors"' > patch.txt
+          echo '  git submodule update --init --recursive 2>/dev/null || true' > patch.txt
+          echo '  cd "DesktopEditors"' >> patch.txt
           echo '  git fetch origin main 2>/dev/null || true' >> patch.txt
-          echo '  git checkout FETCH_HEAD -- build 2>/dev/null || true' >> patch.txt
           echo '  for sub in core desktop-apps sdkjs web-apps; do' >> patch.txt
           echo '    if [ -d "$sub" ]; then' >> patch.txt
           echo '      (' >> patch.txt
           echo '        cd "$sub"' >> patch.txt
-          echo '        # The new Docker build infrastructure from Euro-Office/main requires the Euro-Office forks' >> patch.txt
-          echo '        # because they contain CMakeLists.txt and other build files missing in the upstream ONLYOFFICE repos.' >> patch.txt
           echo '        git remote set-url origin https://github.com/Euro-Office/$sub.git 2>/dev/null || true' >> patch.txt
           echo '        git fetch origin main 2>/dev/null || true' >> patch.txt
           echo '        git reset --hard origin/main 2>/dev/null || true' >> patch.txt
-          echo '        git submodule update --init --recursive 2>/dev/null || true' >> patch.txt
           echo '      )' >> patch.txt
           echo '    fi' >> patch.txt
           echo '  done' >> patch.txt
-          echo '  git checkout FETCH_HEAD -- .gitmodules 2>/dev/null || true' >> patch.txt
-          echo '  git submodule update --init --recursive 2>/dev/null || true' >> patch.txt
           echo '  for sub in sdkjs-forms document-templates core-fonts; do' >> patch.txt
           echo '    if [ ! -d "$sub" ] || [ -z "$(ls -A $sub 2>/dev/null)" ]; then' >> patch.txt
           echo '      rm -rf "$sub" 2>/dev/null || true' >> patch.txt
@@ -107,6 +102,7 @@ jobs:
           echo '      git clone https://github.com/ONLYOFFICE/$sub.git $sub 2>/dev/null || true' >> patch.txt
           echo '    fi' >> patch.txt
           echo '  done' >> patch.txt
+          echo '  git submodule update --init --recursive 2>/dev/null || true' >> patch.txt
           echo '  cd ".."' >> patch.txt
 
           # Inject the patch.txt contents immediately BEFORE the 'cd "DesktopEditors/build"' command 
@@ -162,6 +158,13 @@ jobs:
 
           sed -i 's|Exec=/usr/bin/euro-office-desktopeditors|Exec=euro-office-desktopeditors|g' euro-office-desktopeditors.desktop || true
 
+          # Fix absolute paths in the wrapper script for portability within AppImage
+          # Inject HEREDIR calculation.
+          sed -i '2iHEREDIR="$(dirname "$(dirname "$(dirname "$(readlink -f "${0}")")")")"' usr/bin/euro-office-desktopeditors
+
+          # Replace absolute paths with paths based on HEREDIR
+          sed -i 's|/opt/euro-office/|${HEREDIR}/opt/euro-office/|g' usr/bin/euro-office-desktopeditors
+
           cd ..
           wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool-x86_64.AppImage
@@ -176,4 +179,3 @@ jobs:
             *.AppImage
           name: Euro-Office Desktop Editors ${{ needs.check-version.outputs.latest_tag }}
           body: "Automated builds for Euro-Office (${{ needs.check-version.outputs.latest_tag }}).\n\nProvides Arch Linux Native installer and universal `.AppImage`."
-
